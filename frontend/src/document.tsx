@@ -16,6 +16,8 @@ const DocumentManagementPage: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('Tous les documents');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false); // Nouvel état pour contrôler l'affichage de la modale
+  const [advancedDetails, setAdvancedDetails] = useState<string>(''); // État pour stocker les détails avancés
 
   const pickFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -142,7 +144,7 @@ const DocumentManagementPage: React.FC = () => {
               handleDateValidation(); 
             }} 
           />
-          <button className="button">Rechercher</button>
+          <button className="button" onClick={() => setShowAdvancedSearch(true)}>Recherche Avancée</button>
         </div>
 
         {errorMessage && <p className="error">{errorMessage}</p>}
@@ -198,7 +200,7 @@ const DocumentManagementPage: React.FC = () => {
                   <button className="button" onClick={() => modifyDocument(index)}>
                     Modifier
                   </button>
-                  <button className="button" onClick={() => removeDocument(index)}>
+                  <button className="button-sup" onClick={() => removeDocument(index)}>
                     Supprimer
                   </button>
                   <button className="button" onClick={() => archiveDocument(index)}>
@@ -210,6 +212,27 @@ const DocumentManagementPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Fenêtre modale de Recherche Avancée */}
+      {showAdvancedSearch && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Recherche Avancée</h2>
+            <textarea 
+              placeholder="Entrez des détails supplémentaires sur le document"
+              value={advancedDetails}
+              onChange={(e) => setAdvancedDetails(e.target.value)}
+            />
+            <button className="button" onClick={() => setShowAdvancedSearch(false)}>Fermer</button>
+            <button className="button" onClick={() => {
+              setShowAdvancedSearch(false);
+              alert('Recherche avancée soumise avec les détails: ' + advancedDetails);
+            }}>
+              Soumettre
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
