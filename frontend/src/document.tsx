@@ -1,7 +1,6 @@
-// DocumentManagementPage.tsx
-
 import React, { useState } from 'react';
 import './DocumentManagementPage.css';
+import logo from './img/logo.jpg';
 
 interface Document {
   name: string;
@@ -19,13 +18,17 @@ const DocumentManagementPage: React.FC = () => {
   const [endDate, setEndDate] = useState<string>('');
 
   const pickFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files ? event.target.files[0] : null;
+    const file = event.target.files?.[0];
     if (file) {
       const exists = documents.some(doc => doc.name === file.name);
       if (exists) {
-        setErrorMessage('Il existe un document avec le même nom.');
+        setErrorMessage('Un document avec ce nom existe déjà.');
       } else {
-        setPendingDocument({ name: file.name, date: new Date().toISOString().slice(0, 10), url: URL.createObjectURL(file) });
+        setPendingDocument({
+          name: file.name,
+          date: new Date().toISOString().slice(0, 10),
+          url: URL.createObjectURL(file)
+        });
         setErrorMessage(null);
       }
     }
@@ -48,12 +51,12 @@ const DocumentManagementPage: React.FC = () => {
 
   const archiveDocument = (index: number) => {
     if (window.confirm('Voulez-vous archiver ce document ?')) {
-      alert(`Document ${documents[index].name} archivé avec succès !`);
+      alert(`Document "${documents[index].name}" archivé avec succès !`);
     }
   };
 
   const modifyDocument = (index: number) => {
-    const newName = prompt('Modifier le nom du document:', documents[index].name);
+    const newName = prompt('Nouveau nom du document:', documents[index].name);
     if (newName) {
       const newDocuments = [...documents];
       newDocuments[index] = { ...newDocuments[index], name: newName };
@@ -75,7 +78,7 @@ const DocumentManagementPage: React.FC = () => {
   };
 
   const handleDateValidation = () => {
-    if (endDate && startDate && endDate < startDate) {
+    if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
       setErrorMessage('La date de fin ne peut pas être avant la date de début.');
     } else {
       setErrorMessage(null);
@@ -86,47 +89,94 @@ const DocumentManagementPage: React.FC = () => {
 
   return (
     <div className="container">
-         <nav className="the-navbar">
-         <div className="logo-container">
-         <img src={require('./img/logo.jpg')} alt="Logo" className="logo" />
-         </div>
-        <div className="the-navbar">
+      <nav className="the-navbar">
+        <div className="logo-container">
+          <img src={logo} alt="Logo de l'application" className="logo" />
+        </div>
+        <div className="nav-buttons">
           <button className="nav-button">Statistiques</button>
           <button className="nav-button">Workflows</button>
-          <button className="nav-button">A propos</button>
+          <button className="nav-button">À propos</button>
         </div>
       </nav>
-     
 
       <div className="content">
-      <nav className="navbar">
-        <div className="nav-right">
-        <button className="nav">Home</button>
-        <button className="nav">Se déconnecter</button>
-        </div>
-      </nav>
+        <nav className="navbar">
+          <div className="nav-right">
+            <button className="nav">Accueil</button>
+            <button className="nav">Déconnexion</button>
+          </div>
+        </nav>
+
         <h1>Gestion des Documents</h1>
+        
         <div className="controls">
           <input
             type="text"
             placeholder="Rechercher des documents"
+            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <select onChange={(e) => setFilterType(e.target.value)} value={filterType}>
+          <select 
+            value={filterType} 
+            onChange={(e) => setFilterType(e.target.value)}
+          >
             <option value="Tous les documents">Tous les documents</option>
             <option value=".pdf">PDF</option>
             <option value=".docx">Word</option>
             <option value=".jpg">Images</option>
           </select>
-          <input type="date" onChange={(e) => { setStartDate(e.target.value); handleDateValidation(); }} />
-          <input type="date" onChange={(e) => { setEndDate(e.target.value); handleDateValidation(); }} />
+          <input 
+            type="date" 
+            value={startDate}
+            onChange={(e) => { 
+              setStartDate(e.target.value); 
+              handleDateValidation(); 
+            }} 
+          />
+          <input 
+            type="date" 
+            value={endDate}
+            onChange={(e) => { 
+              setEndDate(e.target.value); 
+              handleDateValidation(); 
+            }} 
+          />
           <button className="button">Rechercher</button>
         </div>
 
         {errorMessage && <p className="error">{errorMessage}</p>}
-        <input type="text" placeholder="Nom du document" onChange={(e) => setPendingDocument(prev => ({ ...prev, name: e.target.value }))} />
-        <input type="file" onChange={pickFile} />
-        <button className="button" onClick={addDocument}>Ajouter</button>
+        
+        <div className="document-upload">
+          <input 
+            type="text" 
+            placeholder="Nom du document"
+            value={pendingDocument?.name || ''}
+            onChange={(e) => {
+              if (pendingDocument) {
+                setPendingDocument({ ...pendingDocument, name: e.target.value });
+              } else {
+                setPendingDocument({
+                  name: e.target.value,
+                  date: new Date().toISOString().slice(0, 10),
+                  url: ''
+                });
+              }
+            }} 
+          />
+          <input 
+            type="file" 
+            onChange={pickFile} 
+            accept=".pdf,.docx,.jpg,.jpeg,.png"
+          />
+          <button 
+            className="button" 
+            onClick={addDocument}
+            disabled={!pendingDocument?.url}
+          >
+            Ajouter
+          </button>
+        </div>
 
         <table className="document-table">
           <thead>
@@ -138,14 +188,22 @@ const DocumentManagementPage: React.FC = () => {
           </thead>
           <tbody>
             {filteredDocuments.map((doc, index) => (
-              <tr key={index}>
+              <tr key={`${doc.name}-${index}`}>
                 <td>{doc.name}</td>
                 <td>{doc.date}</td>
-                <td>
-                  <button className="button" onClick={() => consultDocument(doc.url)}>Consulter</button>
-                  <button className="button" onClick={() => modifyDocument(index)}>Modifier</button>
-                  <button className="button" onClick={() => removeDocument(index)}>Supprimer</button>
-                  <button className="button" onClick={() => archiveDocument(index)}>Archiver</button>
+                <td className="actions">
+                  <button className="button" onClick={() => consultDocument(doc.url)}>
+                    Consulter
+                  </button>
+                  <button className="button" onClick={() => modifyDocument(index)}>
+                    Modifier
+                  </button>
+                  <button className="button" onClick={() => removeDocument(index)}>
+                    Supprimer
+                  </button>
+                  <button className="button" onClick={() => archiveDocument(index)}>
+                    Archiver
+                  </button>
                 </td>
               </tr>
             ))}
@@ -154,6 +212,6 @@ const DocumentManagementPage: React.FC = () => {
       </div>
     </div>
   );
-}
+};
 
 export default DocumentManagementPage;

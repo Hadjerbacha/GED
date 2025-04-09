@@ -4,7 +4,7 @@ import LoginComponent from "./components/LoginComponent";
 import Register from "./components/Register";
 import WorkflowsComponent from "./WorkflowsComponent";
 import UserComponent from "./UserComponent";
-import Document from "./Document";
+import Document from "./document";
 
 const App = () => {
   return (
